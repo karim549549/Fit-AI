@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse) {}
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {}
+  rpc SendVerificationEmail(SendVerificationEmailRequest) returns (SendVerificationEmailResponse) {}
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {}
+  rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse) {}
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {}
+}
+
+message RefreshTokenRequest {
+  string tokenId = 1;
+}
+
+message RefreshTokenResponse {
+  oneof result {
+    AuthResponse authResponse = 1;
+    ErrorResponse errorResponse = 2;
+  }
+}
+
+message SendVerificationEmailRequest {
+  string email = 1;
+}
+
+message SendVerificationEmailResponse {
+ ErrorResponse errorResponse = 1;
+}
+
+message VerifyEmailRequest {
+  string tokenId = 1;
+}
+
+message VerifyEmailResponse {
+    ErrorResponse errorResponse = 1;
+}
+
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+message ForgotPasswordResponse {
+  ErrorResponse errorResponse = 1;
+}
+
+message ResetPasswordRequest {
+  string tokenId = 1;
+  string newPassword = 2;
+}
+
+message ResetPasswordResponse {
+  oneof result {
+    AuthResponse authResponse = 1;
+    ErrorResponse errorResponse = 2;
+  }
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+    string googleId = 3;
+}
+
+message LoginResponse {
+  oneof result {
+    AuthResponse authResponse = 1;
+    ErrorResponse errorResponse = 2;
+  }
+}
+
+message AuthResponse {
+  string accessToken = 1;
+  RpcToken rpcToken = 2;
+}
+
+message RpcToken {
+  string id = 1;
+  string type = 2;
+  string userId = 3;
+  string createdAt = 4;
+  string expiresAt = 5;
+  bool isRevoked = 6;
+}
+
+message ErrorResponse {
+  int32 code = 1;
+  string message = 2;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string role = 3;
+  string googleId = 4;
+}
+
+message RegisterResponse {
+  oneof result {
+    AuthResponse authResponse = 1;
+    ErrorResponse errorResponse = 2;
+  }
+}

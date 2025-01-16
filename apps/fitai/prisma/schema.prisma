@@ -1,0 +1,174 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:superuser@localhost:5432/FITAI"
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  isEmailConfirmed  Boolean  @default(false)
+  hashedPassword    String?
+  googleId          String?
+  googleAccessToken String?
+  role              String   @default("USER")
+  tokens            Token[]
+  profile           Profile?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Token {
+  id     String @id @default(uuid())
+  userId String
+  type   String
+
+  createdAt DateTime @default(now())
+  expireAt  DateTime
+  isRevoked Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Profile {
+  id            Int     @id @default(autoincrement())
+  userId        String  @unique
+  profilePicUrl String?
+
+  name          String
+  weight        Int
+  height        Int
+  age           Int
+  activityLevel Int
+  gender        String
+  goal          String
+
+  notificationSetting NotificationSetting?
+  dietPlan            DietPlan?
+  dietaryPreferences  DietaryPreferences?
+  user                User                 @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DietaryPreferences {
+  id                     Int     @id @default(autoincrement())
+  profileId              Int     @unique
+  isVegan                Boolean @default(false)
+  isVegetarian           Boolean @default(false)
+  isLactoseFree          Boolean @default(false)
+  isGlutenFree           Boolean @default(false)
+  allergies              Json?
+  cuisinePreferences     Json?
+  ingredientCostRange    Json?
+  cookingTimePreference  Int?
+  preferredMealTypes     Json?
+  cookingDifficulty      String?
+  portionSizes           Json?
+  foodVarietyLevel       String?
+  nutritionalFocus       Json? // { "Fiber": "High", "Sodium": "Low" }
+  preparationPreferences Json? // { "Grilled": true, "Fried": false }
+  mealFrequency          Int? // Number of meals per day
+  profile                Profile @relation(fields: [profileId], references: [id])
+}
+
+model DietPlan {
+  id            Int      @id @default(autoincrement())
+  startDate     DateTime
+  endDate       DateTime
+  rating        Float    @default(0)
+  ratingCounter Int      @default(0)
+
+  profileId Int @unique
+
+  meals DietPlanMeal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id])
+}
+
+model DietPlanMeal {
+  id         Int      @id @default(autoincrement())
+  dietPlanId Int
+  recipeId   Int
+  date       DateTime
+
+  dietPlan DietPlan @relation(fields: [dietPlanId], references: [id])
+  recipe   Recipe   @relation(fields: [recipeId], references: [id])
+}
+
+model Recipe {
+  id              Int    @id
+  recipeId        String @unique
+  fullName        String
+  title           String
+  imageUrl        String
+  description     Json?
+  prepTime        Int?
+  cookTime        Int?
+  course          Json?
+  cuisine         Json?
+  serving         String
+  ingredientCount Int?
+  calories        Int?
+  carbohydrates   Int?
+  protein         Int?
+  fat             Int?
+  instructions    Json?
+
+  dietPlanMeal DietPlanMeal[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model NotificationSetting {
+  id        Int @id @default(autoincrement())
+  profileId Int @unique
+
+  systemNotifications     Boolean @default(true)
+  activityNotifications   Boolean @default(true)
+  promotionsNotifications Boolean @default(true)
+
+  notifications        Notification[]
+  archivedNotification ArchivedNotification[]
+
+  profile Profile @relation(fields: [profileId], references: [id])
+}
+
+model Notification {
+  id                    Int      @id @default(autoincrement())
+  notificationSettingId Int
+  type                  String
+  scheduledAt           DateTime
+
+  createdAt DateTime @default(now())
+
+  notificationSetting NotificationSetting @relation(fields: [notificationSettingId], references: [id])
+
+  @@index([scheduledAt])
+}
+
+model ArchivedNotification {
+  id                    Int @id @default(autoincrement())
+  notificationSettingId Int
+
+  type        String
+  scheduledAt DateTime
+  sentAt      DateTime @default(now())
+
+  notificationSetting NotificationSetting @relation(fields: [notificationSettingId], references: [id])
+}
